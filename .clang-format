@@ -1,0 +1,64 @@
+### Clang-Format Style Configuration File ###
+### https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+# Disable automatic sorting of header files.
+SortIncludes: false
+# Follow Microsoft coding style guide.
+BasedOnStyle: Microsoft
+# Place braces on new line (Allman style).
+BreakBeforeBraces: Allman
+# Allow line breaks before binary operators except assignment (=).
+BreakBeforeBinaryOperators: NonAssignment
+# No column limit (allow long lines).
+ColumnLimit: 0
+# Use spaces instead of tabs for indentation.
+UseTab: Never
+# 1 indent = 4 spaces.
+IndentWidth: 4
+TabWidth: 4
+# Set indentation width to 8 for constructor initializer members.
+ConstructorInitializerIndentWidth: 8
+# Auto-detect C standard (C11, C99, etc.).
+Standard: Auto
+# Align trailing comments to column.
+AlignTrailingComments: true
+# Align consecutive macros to column.
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true # Align across empty lines.
+  AcrossComments: false # Ignore comment lines.
+# Disable column alignment for assignment statements (=).
+AlignConsecutiveAssignments:
+  Enabled: false
+# Align operands of operators (+, -, *, etc.).
+AlignOperands: Align
+# Do not allow case labels on a single line.
+AllowShortCaseLabelsOnASingleLine: false
+# Do not allow if statements on a single line.
+AllowShortIfStatementsOnASingleLine: Never
+# Align pointer (*) to the left of type.
+PointerAlignment: Right
+ReferenceAlignment: Left
+# Apply indentation to case labels.
+IndentCaseLabels: true
+# Additional setting: Force separate members in struct initialization.
+BreakConstructorInitializers: BeforeColon
+# Insert Newline At End Of File
+InsertNewlineAtEOF: true
+# Align escaped newlines as far left as possible
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: Align
+# Allow parameter to be placed in multiple lines
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+# Not packing parameter in one line
+BinPackArguments: false
+BinPackParameters: false
+
+# Do not indent extern "C" blocks in C++ files.
+# This keeps 'extern "C" { ... }' at the left margin.
+IndentExternBlock: NoIndent
+
+SpacesBeforeTrailingComments: 3
+
+
