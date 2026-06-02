@@ -120,10 +120,6 @@ enum SSD1309_CMD_SET {
 #include "io_cfg.h"
 #endif
 
-#define OLED_I2C_CLK    OLED_CLK_PIN	
-#define OLED_I2C_DATA   OLED_DATA_PIN
-#define OLED_I2C_RES    OLED_RES_PIN
-
 #define BLACK 0
 #define WHITE 1
 
@@ -162,19 +158,27 @@ public:
 	unsigned int getFrameBufferSize() const;
 
 protected:
-	//write one byte to the screen.
-	void writeByte(unsigned char  b);
-	void writeCommand(unsigned char  cmd);
-
-	//atomic control function
-	void startIIC();//turn on the IIC
-	void stopIIC();//turn off the IIC.
-	void startDataSequence();
+	//GPIO SPI communication methods (bit-banged)
+	void spiTransfer(unsigned char b);
+	void writeCommand(unsigned char cmd);
+	void writeData(unsigned char data);
+	
+	//GPIO SPI control methods
+	void selectCS();
+	void deselectCS();
+	void setDC_Command();
+	void setDC_Data();
+	void spiClockHigh();
+	void spiClockLow();
+	void spiDataHigh();
+	void spiDataLow();
 
 protected:
-	int m_sda;
-	int m_scl;
-	int m_res;
+	int m_sck;    // SPI Clock pin
+	int m_mosi;   // SPI MOSI pin
+	int m_dc;     // Data/Command pin
+	int m_res;    // Reset pin
+	int m_cs;     // Chip Select pin
 	unsigned char* m_pFramebuffer;
 };
 
