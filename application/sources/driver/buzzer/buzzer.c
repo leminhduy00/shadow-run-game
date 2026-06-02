@@ -1,14 +1,13 @@
-#include <stm32l1xx_rcc.h>
-#include <stm32l1xx_gpio.h>
-#include <misc.h>
+#include <stdbool.h>
 #include <buzzer.h>
+#include "tim.h"
+#include "stm32h7xx_ll_bus.h"
+#include "stm32h7xx_ll_rcc.h"
 
 volatile       uint32_t          _beep_duration;
 volatile       bool              _tones_playing;
 volatile const Tone_TypeDef     *_tones;
 volatile       bool              _buzzer_silent = BUZZER_SILENT_OFF;
-
-GPIO_InitTypeDef GPIO_InitStructure;
 
 typedef struct {
 	buzzer_sound_t sound;
@@ -53,8 +52,9 @@ static const Tone_TypeDef* buzzer_get_music(buzzer_sound_t sound) {
 }
 
 void buzzer_irq( void ) {
-	if (BUZZER_TIM->SR & TIM_SR_UIF) {
-		BUZZER_TIM->SR &= ~TIM_SR_UIF; // Clear the TIMx's interrupt pending bit
+	if (LL_TIM_IsActiveFlag_UPDATE(BUZZER_TIM) && LL_TIM_IsEnabledIT_UPDATE(BUZZER_TIM))
+	{
+		LL_TIM_ClearFlag_UPDATE(BUZZER_TIM); // Clear the TIMx's interrupt pending bit// Clear the TIMx's interrupt pending bit
 
 		_beep_duration--;
 		if (_beep_duration == 0) {
@@ -69,8 +69,9 @@ void buzzer_irq( void ) {
 				} else {
 					if (_tones->frequency == 0) {
 						// Silence period
-						BUZZER_TIM->ARR = SystemCoreClock / (100 * BUZZER_TIM->PSC) - 1;
-						BUZZER_TIM->CCR3 = 0; // 0% duty cycle
+						LL_TIM_SetAutoReload(BUZZER_TIM, HAL_RCC_GetPCLK1Freq() / (100 * (LL_TIM_GetPrescaler(BUZZER_TIM) + 1)) - 1);
+						LL_TIM_OC_SetCompareCH2(BUZZER_TIM, 0); // 0% duty cycle
+						LL_TIM_GenerateEvent_UPDATE(BUZZER_TIM);
 						_beep_duration = _tones->duration + 1;
 					} else {
 						// Play next tone in sequence
@@ -86,52 +87,7 @@ void buzzer_irq( void ) {
 
 // Initialize buzzer output
 void BUZZER_Init(void) {
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	TIM_OCInitTypeDef TIM_OCInitStructure;
-	NVIC_InitTypeDef NVIC_InitStruct;
-
-	RCC_APB1PeriphClockCmd(BUZZER_TIM_PERIPH, ENABLE);
-
-	GPIO_InitStructure.GPIO_Pin = BUZZER_IO_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
-	GPIO_Init(BUZZER_IO_PORT, &GPIO_InitStructure);
-	GPIO_PinAFConfig(BUZZER_IO_PORT, BUZZER_IO_SOURCE, BUZZER_IO_AF);
-	GPIO_ResetBits(BUZZER_IO_PORT, BUZZER_IO_PIN);
-
-	TIM_DeInit(BUZZER_TIM);
-	TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock / 4000000;
-	TIM_TimeBaseStructure.TIM_Period = 999;
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInit(BUZZER_TIM, &TIM_TimeBaseStructure);
-
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_Pulse = 499;
-
-	TIM_OC3Init(BUZZER_TIM, &TIM_OCInitStructure);
-	TIM_OC3PreloadConfig(BUZZER_TIM, TIM_OCPreload_Enable);
-
-	NVIC_InitStruct.NVIC_IRQChannel = BUZZER_TIM_IRQ;
-	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
-	NVIC_Init(&NVIC_InitStruct);
-
-	TIM_ARRPreloadConfig(BUZZER_TIM, ENABLE);
-	TIM_ITConfig(BUZZER_TIM, TIM_IT_Update, ENABLE);
-
-	/* BUZZER TIM enable counter */
-	TIM_Cmd(BUZZER_TIM, ENABLE);
-
-	/* BUZZER disable */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(BUZZER_IO_PORT, &GPIO_InitStructure);
+	MX_TIM3_Init();
 }
 
 // Turn on buzzer with specified frequency
@@ -145,28 +101,30 @@ void BUZZER_Enable(uint16_t freq, uint32_t duration) {
 		_beep_duration = (freq / 100) * duration + 1;
 
 		// Configure buzzer pin
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-		GPIO_Init(BUZZER_IO_PORT, &GPIO_InitStructure);
+		LL_GPIO_SetPinMode(BUZZER_IO_PORT, BUZZER_IO_PIN, LL_GPIO_MODE_ALTERNATE);
 
 		// Configure and enable PWM timer
-		RCC->APB1ENR |= BUZZER_TIM_PERIPH; // Enable TIMx peripheral
-		BUZZER_TIM->ARR = SystemCoreClock / (freq * BUZZER_TIM->PSC) - 1;
-		BUZZER_TIM->CCR3 = BUZZER_TIM->ARR >> 1; // 50% duty cycle
-		BUZZER_TIM->CR1 |= TIM_CR1_CEN; // Counter enable
+		LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3); // Enable TIMx peripheral
+		LL_TIM_SetAutoReload(BUZZER_TIM, HAL_RCC_GetPCLK1Freq() / (freq * (LL_TIM_GetPrescaler(BUZZER_TIM) + 1)) - 1);
+		LL_TIM_OC_SetCompareCH2(BUZZER_TIM, LL_TIM_GetAutoReload(BUZZER_TIM) >> 1); // 50% duty cycle
+		LL_TIM_ClearFlag_UPDATE(BUZZER_TIM);
+		LL_TIM_GenerateEvent_UPDATE(BUZZER_TIM);
+		LL_TIM_EnableIT_UPDATE(BUZZER_TIM);
+		LL_TIM_CC_EnableChannel(BUZZER_TIM, LL_TIM_CHANNEL_CH2);
+		LL_TIM_EnableCounter(BUZZER_TIM); // Counter enable
 	}
 }
 
 // Turn off buzzer
 void BUZZER_Disable(void) {
 	// Counter disable
-	BUZZER_TIM->CR1 &= ~TIM_CR1_CEN;
+	LL_TIM_DisableIT_UPDATE(BUZZER_TIM);
+	LL_TIM_CC_DisableChannel(BUZZER_TIM, LL_TIM_CHANNEL_CH2);
+	LL_TIM_DisableCounter(BUZZER_TIM);
 	// Disable TIMx peripheral to conserve power
-	RCC->APB1ENR &= ~BUZZER_TIM_PERIPH;
+	LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_TIM3);
 	// Configure buzzer pin as analog input without pullup to conserve power
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(BUZZER_IO_PORT, &GPIO_InitStructure);
+	LL_GPIO_SetPinMode(BUZZER_IO_PORT, BUZZER_IO_PIN, LL_GPIO_MODE_ANALOG);
 }
 
 // Start playing tones sequence
