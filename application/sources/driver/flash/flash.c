@@ -3,6 +3,7 @@
 #include "sys_ctrl.h"
 #include "sys_io.h"
 #include "sys_dbg.h"
+#include "stm32h7xx.h"
 
 /* WINBOND commands */
 #define WINBOND_W_EN						0x06	//write enable
@@ -184,7 +185,7 @@ uint8_t flash_write(uint32_t address, uint8_t* pbuf, uint32_t len) {
 }
 
 uint8_t flash_erase_sector(uint32_t address) {
-	if (address % FLASH_SECTOR_SIZE) {
+	if (address % 0x1000) {
 		return FLASH_DRIVER_NG;
 	}
 

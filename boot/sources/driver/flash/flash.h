@@ -11,7 +11,6 @@ extern "C"
 #define FLASH_DRIVER_OK			(0x00)
 #define FLASH_DRIVER_NG			(0x01)
 
-#define FLASH_SECTOR_SIZE			(0x1000)
 #define FLASH_BLOCK_64K_SIZE		(0x10000)
 
 extern uint8_t flash_read(uint32_t address, uint8_t* pbuf, uint32_t len);
