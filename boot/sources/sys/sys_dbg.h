@@ -13,7 +13,7 @@ extern "C"
 #endif
 
 #include <stdint.h>
-
+#include "platform.h"
 #include "xprintf.h"
 
 #if defined(SYS_DBG_EN)
