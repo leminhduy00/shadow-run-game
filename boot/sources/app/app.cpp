@@ -26,6 +26,8 @@
 
 #include "uart_boot.h"
 
+#include "spi.h"
+
 led_t led_life;
 
 const char* boot_version = BOOT_VER;
@@ -58,7 +60,7 @@ int boot_main() {
 	/**************************************************************************
 	* hardware configure
 	***************************************************************************/
-	SPI.begin();
+	MX_SPI1_Init();
 	flash_io_ctrl_init();
 	sys_ctrl_independent_watchdog_init();	/* 32s */
 
@@ -145,9 +147,8 @@ int boot_main() {
 		/**
 		 * unlock flash and clear all pendings flash's status
 		 */
-		FLASH_Unlock();
-		FLASH_ClearFlag(FLASH_FLAG_EOP|FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-						FLASH_FLAG_SIZERR | FLASH_FLAG_OPTVERR | FLASH_FLAG_OPTVERRUSR);
+		HAL_FLASH_Unlock();
+		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS_BANK1 | FLASH_FLAG_ALL_ERRORS_BANK2);
 
 		/**
 		 * erase application internal flash, prepare for new firmware
@@ -201,18 +202,17 @@ int boot_main() {
 			memset(halfpage_buffer, 0 ,128);
 			flash_read(app_sys_boot.fw_app_cmd.src_addr + external_fw_index, halfpage_buffer, external_fw_read_buf_len);
 
-			flash_status = FLASH_BUSY;
+			flash_status = HAL_BUSY;
 
 			ENTRY_CRITICAL();
-			flash_status =  FLASH_ProgramHalfPage(app_sys_boot.fw_app_cmd.des_addr + external_fw_index, (uint32_t*)halfpage_buffer);
+			flash_status =  HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, app_sys_boot.fw_app_cmd.des_addr + external_fw_index, (uint32_t)halfpage_buffer);
 			EXIT_CRITICAL();
 
-			if (flash_status == FLASH_COMPLETE) {
+			if (flash_status == HAL_OK) {
 				external_fw_index += external_fw_read_buf_len;
 			}
 			else {
-				FLASH_ClearFlag(FLASH_FLAG_EOP|FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-								FLASH_FLAG_SIZERR | FLASH_FLAG_OPTVERR | FLASH_FLAG_OPTVERRUSR);
+				__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS_BANK1 | FLASH_FLAG_ALL_ERRORS_BANK2);
 			}
 		}
 #endif
@@ -357,16 +357,15 @@ void uart_boot_cmd_update_res(void* boot_obj) {
 		/**
 		 * unlock flash and clear all pendings flash's status
 		 */
-		FLASH_Unlock();
-		FLASH_ClearFlag(FLASH_FLAG_EOP|FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-						FLASH_FLAG_SIZERR | FLASH_FLAG_OPTVERR | FLASH_FLAG_OPTVERRUSR);
+		HAL_FLASH_Unlock();
+		__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS_BANK1 | FLASH_FLAG_ALL_ERRORS_BANK2);
 
 		/**
 		 * erase application internal flash, prepare for new firmware
 		 */
 		for (uint32_t index = 0; index < page_number; index++) {
 			flash_erase_addr = app_sys_boot.fw_app_cmd.des_addr + (index * 256);
-			FLASH_ErasePage(flash_erase_addr);
+			internal_flash_erase_pages_cal(flash_erase_addr, sizeof(uint32_t));
 			memcpy(uart_boot_data_cmd_res.data, &flash_erase_addr, sizeof(uint32_t));
 			uart_boot_write((uint8_t*)&uart_boot_data_cmd_res, uart_boot_data_cmd_get_len_used(&uart_boot_data_cmd_res));
 		}
@@ -410,24 +409,23 @@ void uart_boot_cmd_transfer_fw_res(void* boot_obj) {
 			}
 		}
 #else
-		flash_status = FLASH_BUSY;
+		flash_status = HAL_BUSY;
 
-		while (flash_status != FLASH_COMPLETE) {
+		while (flash_status != HAL_OK) {
 			ENTRY_CRITICAL();
-			flash_status =  FLASH_ProgramHalfPage(app_sys_boot.fw_app_cmd.des_addr + transfer_fw_index, (uint32_t*)(uart_boot_object->data));
+			flash_status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, app_sys_boot.fw_app_cmd.des_addr + transfer_fw_index, (uint32_t)(uart_boot_object->data));
 			EXIT_CRITICAL();
 
 			if (memcmp((uint8_t*)(app_sys_boot.fw_app_cmd.des_addr + transfer_fw_index), (uint8_t*)(uart_boot_object->data), uart_boot_object->len) != 0) {
-				flash_status = FLASH_BUSY;
+				flash_status = HAL_BUSY;
 			}
 
-			if(flash_status == FLASH_COMPLETE) {
+			if(flash_status == HAL_OK) {
 				sys_ctrl_independent_watchdog_reset();
 				transfer_fw_index += uart_boot_object->len;
 			}
 			else {
-				FLASH_ClearFlag(FLASH_FLAG_EOP|FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR |
-								FLASH_FLAG_SIZERR | FLASH_FLAG_OPTVERR | FLASH_FLAG_OPTVERRUSR);
+				__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS_BANK1 | FLASH_FLAG_ALL_ERRORS_BANK2);
 			}
 		}
 #endif
