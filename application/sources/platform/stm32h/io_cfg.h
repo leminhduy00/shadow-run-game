@@ -30,14 +30,14 @@ extern "C"
 /******************************************************************************
  *Pin map button
 *******************************************************************************/
-#define BUTTON_DOWN_IO_PIN				(LL_GPIO_PIN_4)
-#define BUTTON_DOWN_IO_PORT				(GPIOC)
+#define BUTTON_DOWN_IO_PIN				(LL_GPIO_PIN_0)
+#define BUTTON_DOWN_IO_PORT				(GPIOD)
 
-#define BUTTON_UP_IO_PIN				(LL_GPIO_PIN_5)
+#define BUTTON_UP_IO_PIN				(LL_GPIO_PIN_11)
 #define BUTTON_UP_IO_PORT				(GPIOC)
 
-#define BUTTON_MODE_IO_PIN				(LL_GPIO_PIN_0)
-#define BUTTON_MODE_IO_PORT				(GPIOB)
+#define BUTTON_MODE_IO_PIN				(LL_GPIO_PIN_11)
+#define BUTTON_MODE_IO_PORT				(GPIOA)
 
 /*****************************************************************************
  *Pin map led life
@@ -50,7 +50,7 @@ extern "C"
 ******************************************************************************/
 
 #define BUZZER_IO_PIN					(LL_GPIO_PIN_7)
-#define BUZZER_IO_PORT					(GPIOA)
+#define BUZZER_IO_PORT					(GPIOC)
 #define BUZZER_TIM                      (TIM3)
 
 /*****************************************************************************
@@ -63,19 +63,19 @@ extern "C"
 /****************************************************************************
  *Pin map OLED (SPI interface)
 *****************************************************************************/
-#define OLED_SCK_IO_PIN					(LL_GPIO_PIN_10)
-#define OLED_SCK_IO_PORT				(GPIOB)
+#define OLED_SCK_IO_PIN					(LL_GPIO_PIN_2)
+#define OLED_SCK_IO_PORT				(GPIOD)
 
-#define OLED_MOSI_IO_PIN				(LL_GPIO_PIN_1)
-#define OLED_MOSI_IO_PORT				(GPIOC)
+#define OLED_MOSI_IO_PIN				(LL_GPIO_PIN_4)
+#define OLED_MOSI_IO_PORT				(GPIOD)
 
-#define OLED_CS_IO_PIN					(LL_GPIO_PIN_1)
-#define OLED_CS_IO_PORT					(GPIOA)
+#define OLED_CS_IO_PIN					(LL_GPIO_PIN_5)
+#define OLED_CS_IO_PORT					(GPIOB)
 
-#define OLED_DC_IO_PIN					(LL_GPIO_PIN_5)
-#define OLED_DC_IO_PORT					(GPIOA)
+#define OLED_DC_IO_PIN					(LL_GPIO_PIN_1)
+#define OLED_DC_IO_PORT					(GPIOE)
 
-#define OLED_RST_IO_PIN					(LL_GPIO_PIN_11)
+#define OLED_RST_IO_PIN					(LL_GPIO_PIN_9)
 #define OLED_RST_IO_PORT				(GPIOB)
 
 /* Arduino-style pin defines for wiring_digital.cpp */

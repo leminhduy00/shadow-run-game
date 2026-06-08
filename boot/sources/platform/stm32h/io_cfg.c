@@ -22,13 +22,13 @@ void io_button_mode_init()
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
 
     GPIO_InitStruct.Pin = BUTTON_MODE_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_MODE_IO_PORT, &GPIO_InitStruct);
 }
 
 void io_button_up_init()
@@ -41,20 +41,20 @@ void io_button_up_init()
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_UP_IO_PORT, &GPIO_InitStruct);
 }
 
 void io_button_down_init()
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOC);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
 
     GPIO_InitStruct.Pin = BUTTON_DOWN_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_DOWN_IO_PORT, &GPIO_InitStruct);
 }
 
 uint8_t io_button_mode_read()
@@ -138,36 +138,6 @@ uint8_t flash_transfer(uint8_t data)
    HAL_SPI_TransmitReceive(&hspi1, &data, &rx_data, 1, 100);
 
     return rx_data;
-}
-
-/******************************************************************************
- * SH1106 oled IO function
- *******************************************************************************/
-void oled_io_init(void)
-{
-    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
-
-    LL_GPIO_ResetOutputPin(OLED_DC_GPIO_PORT, OLED_DC_PIN);
-    LL_GPIO_SetOutputPin(OLED_CS_GPIO_PORT, OLED_CS_PIN);
-    LL_GPIO_SetOutputPin(OLED_RST_GPIO_PORT, OLED_RST_PIN);
-
-    GPIO_InitStruct.Pin = OLED_CS_PIN | OLED_DC_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_MEDIUM;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /**/
-    GPIO_InitStruct.Pin = OLED_RST_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_MEDIUM;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-    LL_GPIO_Init(OLED_RST_GPIO_PORT, &GPIO_InitStruct);
 }
 
 /******************************************************************************

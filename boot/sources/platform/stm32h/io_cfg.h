@@ -30,14 +30,14 @@ extern "C"
 /******************************************************************************
  *Pin map button
 *******************************************************************************/
-#define BUTTON_DOWN_IO_PIN				(LL_GPIO_PIN_4)
-#define BUTTON_DOWN_IO_PORT				(GPIOC)
+#define BUTTON_DOWN_IO_PIN				(LL_GPIO_PIN_0)
+#define BUTTON_DOWN_IO_PORT				(GPIOD)
 
-#define BUTTON_UP_IO_PIN				(LL_GPIO_PIN_5)
+#define BUTTON_UP_IO_PIN				(LL_GPIO_PIN_11)
 #define BUTTON_UP_IO_PORT				(GPIOC)
 
-#define BUTTON_MODE_IO_PIN				(LL_GPIO_PIN_0)
-#define BUTTON_MODE_IO_PORT				(GPIOB)
+#define BUTTON_MODE_IO_PIN				(LL_GPIO_PIN_11)
+#define BUTTON_MODE_IO_PORT				(GPIOA)
 
 /*****************************************************************************
  *Pin map led life
@@ -97,11 +97,6 @@ extern void flash_io_ctrl_init();
 extern void flash_cs_low();
 extern void flash_cs_high();
 extern uint8_t flash_transfer(uint8_t);
-
-/******************************************************************************
-* OLED IO function
-*******************************************************************************/
-extern void oled_io_init(void);
 
 /******************************************************************************
 * eeprom function

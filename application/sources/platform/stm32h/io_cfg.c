@@ -22,13 +22,13 @@ void io_button_mode_init()
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
 
     GPIO_InitStruct.Pin = BUTTON_MODE_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_MODE_IO_PORT, &GPIO_InitStruct);
 }
 
 void io_button_up_init()
@@ -41,20 +41,20 @@ void io_button_up_init()
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_UP_IO_PORT, &GPIO_InitStruct);
 }
 
 void io_button_down_init()
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOC);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
 
     GPIO_InitStruct.Pin = BUTTON_DOWN_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
 
-    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    LL_GPIO_Init(BUTTON_DOWN_IO_PORT, &GPIO_InitStruct);
 }
 
 uint8_t io_button_mode_read()
@@ -182,7 +182,7 @@ void oled_sck_input_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
     
     GPIO_InitStruct.Pin = OLED_SCK_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
@@ -196,7 +196,7 @@ void oled_sck_output_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
 
     GPIO_InitStruct.Pin = OLED_SCK_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -226,7 +226,7 @@ void oled_mosi_input_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOC);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
     
     GPIO_InitStruct.Pin = OLED_MOSI_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
@@ -240,7 +240,7 @@ void oled_mosi_output_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOC);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOD);
 
     GPIO_InitStruct.Pin = OLED_MOSI_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -270,7 +270,7 @@ void oled_cs_input_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
     
     GPIO_InitStruct.Pin = OLED_CS_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
@@ -284,7 +284,7 @@ void oled_cs_output_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOB);
 
     GPIO_InitStruct.Pin = OLED_CS_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -314,7 +314,7 @@ void oled_dc_input_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOE);
     
     GPIO_InitStruct.Pin = OLED_DC_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
@@ -328,7 +328,7 @@ void oled_dc_output_mode(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
+    LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOE);
 
     GPIO_InitStruct.Pin = OLED_DC_IO_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
