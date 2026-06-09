@@ -6,8 +6,8 @@ extern "C"
 {
 #endif
 
-#include "Arduino.h"
-#include "SPI.h"
+// #include "Arduino.h"
+// #include "SPI.h"
 
 #ifdef __cplusplus
 }

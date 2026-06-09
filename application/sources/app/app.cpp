@@ -51,10 +51,10 @@
 #include "sys_ctrl.h"
 #include "sys_dbg.h"
 
+#include "spi.h"
+
 /* arduino include */
-#include "SPI.h"
 #include "WString.h"
-#include "HardwareSerial.h"
 #include "ArduinoJson.h"
 
 /* common include */
@@ -127,9 +127,9 @@ int main_app() {
 	**********************/
 	/* init watch dog timer */
 	sys_ctrl_independent_watchdog_init();	/* 32s */
-	sys_ctrl_soft_watchdog_init(200);		/* 20s */
+	sys_ctrl_soft_watchdog_init(20000);		/* 20s */
 
-	SPI.begin();
+	MX_SPI1_Init();
 
 	/* adc peripheral configure */
 	io_cfg_adc1();			/* configure adc for thermistor and CT sensor */

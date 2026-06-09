@@ -3,22 +3,80 @@
 static unsigned char frame_buffer[FBSIZE];
 
 Adafruit_oled_drv::Adafruit_oled_drv() : Adafruit_GFX(WIDTH, HEIGHT) {
-	m_sda		   = OLED_I2C_DATA;
-	m_scl		   = OLED_I2C_CLK;
-	m_res		   = OLED_I2C_RES;
+	m_sck = OLED_SPI_SCK_PIN;
+	m_mosi = OLED_SPI_MOSI_PIN;
+	m_dc = OLED_DC_PIN;
+	m_res = OLED_RES_PIN;
+	m_cs = OLED_CS_PIN;
 	m_pFramebuffer = 0;
 }
 Adafruit_oled_drv::~Adafruit_oled_drv() {}
 
-bool Adafruit_oled_drv::initialize() {
-	// setup the pin mode
-	pinMode(m_sda, OUTPUT);
-	pinMode(m_scl, OUTPUT);
-	pinMode(m_res, OUTPUT);
+void Adafruit_oled_drv::spiClockHigh() {
+	digitalWrite(m_sck, HIGH);
+}
 
+void Adafruit_oled_drv::spiClockLow() {
+	digitalWrite(m_sck, LOW);
+}
+
+void Adafruit_oled_drv::spiDataHigh() {
+	digitalWrite(m_mosi, HIGH);
+}
+
+void Adafruit_oled_drv::spiDataLow() {
+	digitalWrite(m_mosi, LOW);
+}
+
+void Adafruit_oled_drv::selectCS() {
+	digitalWrite(m_cs, LOW);
+}
+
+void Adafruit_oled_drv::deselectCS() {
+	digitalWrite(m_cs, HIGH);
+}
+
+void Adafruit_oled_drv::setDC_Command() {
+	digitalWrite(m_dc, LOW);
+}
+
+void Adafruit_oled_drv::setDC_Data() {
+	digitalWrite(m_dc, HIGH);
+}
+
+void Adafruit_oled_drv::spiTransfer(unsigned char b) {
+	unsigned char i;
+	for (i = 0; i < 8; i++) {
+		if ((b << i) & 0x80) {
+			spiDataHigh();
+		}
+		else {
+			spiDataLow();
+		}
+		spiClockHigh();
+		spiClockLow();
+	}
+}
+
+bool Adafruit_oled_drv::initialize() {
+	// Setup the GPIO pins
+	pinMode(m_sck, OUTPUT);
+	pinMode(m_mosi, OUTPUT);
+	pinMode(m_dc, OUTPUT);
+	pinMode(m_res, OUTPUT);
+	pinMode(m_cs, OUTPUT);
+	
+	// Initialize to default states
+	spiClockLow();
+	spiDataLow();
+	deselectCS();
+	setDC_Command();
+	
+	// Reset the display
 	digitalWrite(m_res, LOW);
-	delay(100); // 100ms delay for the screen to power on.
+	delay(100);
 	digitalWrite(m_res, HIGH);
+	delay(50);
 	
 	// malloc the framebuffer.
 	m_pFramebuffer = frame_buffer;
@@ -161,49 +219,19 @@ unsigned int Adafruit_oled_drv::getFrameBufferSize() const {
 }
 
 void Adafruit_oled_drv::writeCommand(unsigned char cmd) {
-	startIIC();
-	writeByte(0x78);	// Slave address,SA0=0
-	writeByte(0x00);	// write command
-	writeByte(cmd);
-	stopIIC();
+	deselectCS();
+	setDC_Command();
+	selectCS();
+	spiTransfer(cmd);
+	deselectCS();
 }
 
-void Adafruit_oled_drv::writeByte(unsigned char b) {
-	unsigned char i;
-	for (i = 0; i < 8; i++) {
-		if ((b << i) & 0x80) {
-			digitalWrite(m_sda, HIGH);
-		}
-		else {
-			digitalWrite(m_sda, LOW);
-		}
-		digitalWrite(m_scl, HIGH);
-		digitalWrite(m_scl, LOW);
-	}
-
-#if defined(SH1106_DRIVER_EN)
-	digitalWrite(m_sda, LOW);
-#elif defined(SSD1309_DRIVER_EN) || defined(SSD1306_DRIVER_EN)
-	digitalWrite(m_sda, HIGH);
-#else
-#error "Don't know oled driver type."
-#endif
-
-	digitalWrite(m_scl, HIGH);
-	digitalWrite(m_scl, LOW);
-}
-
-void Adafruit_oled_drv::startIIC() {
-	digitalWrite(m_scl, HIGH);
-	digitalWrite(m_sda, HIGH);
-	digitalWrite(m_sda, LOW);
-	digitalWrite(m_scl, LOW);
-}
-void Adafruit_oled_drv::stopIIC() {
-	digitalWrite(m_scl, LOW);
-	digitalWrite(m_sda, LOW);
-	digitalWrite(m_scl, HIGH);
-	digitalWrite(m_sda, HIGH);
+void Adafruit_oled_drv::writeData(unsigned char data) {
+	deselectCS();
+	setDC_Data();
+	selectCS();
+	spiTransfer(data);
+	deselectCS();
 }
 
 void Adafruit_oled_drv::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -232,12 +260,6 @@ void Adafruit_oled_drv::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	}
 }
 
-void Adafruit_oled_drv::startDataSequence() {
-	startIIC();
-	writeByte(0x78);
-	writeByte(0x40);	// write data
-}
-
 void Adafruit_oled_drv::update() {
 #if defined(SH1106_DRIVER_EN)
 	const byte pageCount = HEIGHT >> 3;
@@ -256,13 +278,18 @@ void Adafruit_oled_drv::update() {
 		writeCommand(colOffset & 0x0F);
 		writeCommand(0x10 | (colOffset >> 4));
 
+		// Send data for this page
+		deselectCS();
+		setDC_Data();
+		selectCS();
+		
 		for (byte chunk = 0; chunk < chunkCount; chunk++) {
-			startDataSequence();
 			for (byte col = 0; col < chunkWidth; col++, p++) {
-				writeByte(m_pFramebuffer[p]);
+				spiTransfer(m_pFramebuffer[p]);
 			}
-			stopIIC();
 		}
+		
+		deselectCS();
 	}
 
 #elif defined(SSD1306_DRIVER_EN)
@@ -272,11 +299,16 @@ void Adafruit_oled_drv::update() {
 		writeCommand(SSD1306_SET_LOW_COLUMN);
 		writeCommand(SSD1306_SET_HIGH_COLUMN);
 
-		startDataSequence();
+		// Send data for this page
+		deselectCS();
+		setDC_Data();
+		selectCS();
+		
 		for (unsigned int col = 0; col < WIDTH; col++) {
-			writeByte(m_pFramebuffer[fbIndex++]);
+			spiTransfer(m_pFramebuffer[fbIndex++]);
 		}
-		stopIIC();
+		
+		deselectCS();
 	}
 
 #elif defined(SSD1309_DRIVER_EN)
@@ -286,11 +318,16 @@ void Adafruit_oled_drv::update() {
 		writeCommand(0x00);
 		writeCommand(0x10);
 
-		startDataSequence();
+		// Send data for this page
+		deselectCS();
+		setDC_Data();
+		selectCS();
+		
 		for (unsigned int col = 0; col < WIDTH; col++) {
-			writeByte(m_pFramebuffer[fbIndex++]);
+			spiTransfer(m_pFramebuffer[fbIndex++]);
 		}
-		stopIIC();
+		
+		deselectCS();
 	}
 #else
 #error "Don't know oled driver type."
@@ -316,24 +353,22 @@ void Adafruit_oled_drv::updateRow(int rowID) {
 #error "Don't know oled driver type."
 #endif
 
-		// set the positio
-		startIIC();
-		writeByte(0x78);	// Slave address,SA0=0
-		writeByte(0x00);	// write command
-
-		writeByte(0xb0 + rowID);
-		writeByte(higherCol);
-		writeByte(lowerCol);
-
-		stopIIC();
+		// set the position
+		writeCommand(0xb0 + rowID);
+		writeCommand(higherCol);
+		writeCommand(lowerCol);
 
 		// start painting the buffer.
-		startDataSequence();
+		deselectCS();
+		setDC_Data();
+		selectCS();
+		
 		for (x = 0; x < WIDTH; x++) {
 			index = rowID * WIDTH + x;
-			writeByte(m_pFramebuffer[index]);
+			spiTransfer(m_pFramebuffer[index]);
 		}
-		stopIIC();
+		
+		deselectCS();
 	}
 }
 

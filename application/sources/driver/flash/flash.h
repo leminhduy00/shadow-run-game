@@ -12,7 +12,6 @@ extern "C"
 #define FLASH_DRIVER_NG			(0x01)
 
 #define FLASH_PAGE_SIZE			(256)
-#define FLASH_SECTOR_SIZE		(0x1000)
 #define FLASH_BLOCK_32K_SIZE	(0x8000)
 #define FLASH_BLOCK_64K_SIZE	(0x10000)
 

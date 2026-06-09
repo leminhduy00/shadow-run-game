@@ -9,6 +9,7 @@ static sys_boot_t sys_boot_obj;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #pragma GCC diagnostic ignored "-Wstringop-overflow="
+#pragma GCC diagnostic ignored "-Wstringop-overread"
 void sys_boot_init() {
 	extern uint32_t _start_boot_share_data_flash;
 	memcpy((uint8_t*)&sys_boot_obj, (uint8_t*)((uint32_t)&_start_boot_share_data_flash), sizeof(sys_boot_t));
