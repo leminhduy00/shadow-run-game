@@ -9,11 +9,11 @@
 # Utilitis define
 Print = @echo "~"
 
-# Name of build target ex: ak-base-kit-stm32l151-boot.bin
-NAME_MODULE = ak-base-kit-stm32l151-boot
+# Name of build target ex: ak-stm32h743-boot.bin
+NAME_MODULE = ak-stm32h743-boot
 PROJECT = $(NAME_MODULE)
 
-GCC_PATH		= $(HOME)/workspace/tools/gcc-arm-none-eabi-10.3-2021.10
+GCC_PATH			= $(HOME)/workspace/tools/gcc-arm-none-eabi-13.3.1
 PROGRAMER_PATH		= $(HOME)/workspace/tools/STM32CubeProgrammer/bin
 OPENOCD_CFG_PATH	= /usr/local/share/openocd/scripts/board/stm32ldiscovery.cfg
 
@@ -22,13 +22,13 @@ include sources/app/Makefile.mk
 include sources/common/Makefile.mk
 include sources/driver/Makefile.mk
 include sources/sys/Makefile.mk
-include sources/platform/stm32l/Makefile.mk
+include sources/platform/stm32h/Makefile.mk
 
 #Boot start address
 BOOT_START_ADDR_VAL = 0x08000000
 
 # App start address, that need sync with declare in linker file and interrupt vector table.
-APP_START_ADDR_VAL = 0x08003000
+APP_START_ADDR_VAL = 0x08040000
 APP_ADDR_OPTION = -DAPP_START_ADDR=$(APP_START_ADDR_VAL)
 
 # Define console baudrate, that is used to configure UART.
@@ -58,7 +58,7 @@ APP_STACK_SIZE = 720
 # Warning compile option.
 WARNING_OPTION = -Werror -W -Wstack-usage=$(APP_STACK_SIZE)
 
-OBJECTS_DIR = build_$(NAME_MODULE)
+OBJECTS_DIR = build
 TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).axf
 
 SOURCES		+=
@@ -69,17 +69,17 @@ SOURCES_CPP	+=
 SOURCES_CPP_	 = $(shell find $(SOURCES_CPP) -type f -printf "%f\n")
 OBJECTS		+= $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES_CPP_))
 
-LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
-LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
-LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
-LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
-LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
+LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libc.a
+LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libm.a
+LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libg.a
+LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/librdpmon.a
+LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libstdc++_nano.a
 
-LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
-LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
+LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp/libgcc.a
+LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp/libgcov.a
 
-LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp
-LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp
+LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp
 
 # The command for calling the compiler.
 CC		=	$(GCC_PATH)/bin/arm-none-eabi-gcc
@@ -95,12 +95,14 @@ ARM_SIZE	=	$(GCC_PATH)/bin/arm-none-eabi-size
 
 # Set the compiler CPU/FPU options.
 # https://launchpadlibrarian.net/177524521/readme.txt
-CPU = -mthumb -march=armv7-m
-FPU = -mfloat-abi=soft
+CPU = -mthumb -mcpu=cortex-m7
+FPU = -mfloat-abi=softfp
 
 # ASM compiler flags
 AFLAGS +=	$(CPU) 	\
 		$(FPU)	\
+		-MMD			\
+		-MP			\
 		-MD
 
 # Console log compile option
@@ -119,9 +121,9 @@ GENERAL_FLAGS +=			\
 		$(RELEASE_OPTION)	\
 		$(LOG_AK_KERNEL_ENABLE)	\
 		$(APP_ADDR_OPTION)	\
-		-DUSE_STDPERIPH_DRIVER	\
-		-DSTM32L1XX_MD		\
-		-DSTM32L_PLATFORM_BOOT	\
+		-DUSE_HAL_DRIVER \
+		-DSTM32H743xx \
+		-DUSE_FULL_LL_DRIVER	\
 
 COMPILER_FLAGS +=			\
 		$(CPU)			\
@@ -171,15 +173,15 @@ $(TARGET): $(OBJECTS) $(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(L
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.elf)
 	@$(ARM_SIZE) $(TARGET)
 
-$(OBJECTS_DIR)/%.o: %.c
+$(OBJECTS_DIR)/%.o: %.c | create
 	$(Print) CC $@
 	@$(CC) $(CFLAGS) -o $@ $<
 
-$(OBJECTS_DIR)/%.o: %.cpp
+$(OBJECTS_DIR)/%.o: %.cpp | create
 	$(Print) CPP $@
 	@$(CPP) $(CPPFLAGS) -o $@ $<
 
-$(OBJECTS_DIR)/%.o: %.s
+$(OBJECTS_DIR)/%.o: %.s | create
 	$(Print) CC $@
 	@$(CC) $(AFLAGS) -o $@ -c $<
 
@@ -201,3 +203,9 @@ endif
 clean:
 	$(Print) CLEAN $(OBJECTS_DIR) folder
 	@rm -rf $(OBJECTS_DIR)
+
+#######################################
+# dependencies
+#######################################
+-include $(wildcard $(OBJECTS_DIR)/*.d)
+

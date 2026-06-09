@@ -10,21 +10,21 @@
 Print = @echo "~"
 
 # SOC, flash and RAM info
-SOC_NAME = STM32L151CBT6
-SOC_FLASH_BYTES = 131072 # 128KB
-SOC_SRAM_BYTES = 16384	 # 16KB
+SOC_NAME = STM32H743VIT6
+SOC_FLASH_BYTES = 2097152 # 2MB
+SOC_SRAM_BYTES = 524288	 # 512KB
 FLASH_BASE_ADDR_VAL = 0x08000000
 
-# Name of build target ex: ak-base-kit-stm32l151-application.bin
-NAME_MODULE = ak-base-kit-stm32l151-application
+# Name of build target ex: shadow-run-game.bin
+NAME_MODULE = shadow-run-game
 PROJECT = $(NAME_MODULE)
 
-GCC_PATH			= $(HOME)/Workspace/Tools/gcc-arm-none-eabi-10.3-2021.10
+GCC_PATH			= $(HOME)/workspace/tools/gcc-arm-none-eabi-13.3.1
 PROGRAMER_PATH		= $(HOME)/workspace/tools/STM32CubeProgrammer/bin
-OPENOCD_CFG_PATH	= /usr/local/share/openocd/scripts/board/stm32ldiscovery.cfg
+OPENOCD_PATH	= /usr/share/openocd/scripts
 
 # App start address, that need sync with declare in linker file and interrupt vector table.
-APP_START_ADDR_VAL = 0x08003000
+APP_START_ADDR_VAL = 0x08040000
 APP_ADDR_OPTION = -DAPP_START_ADDR=$(APP_START_ADDR_VAL)
 
 # Define console baudrate, that is used to configure UART.
@@ -58,12 +58,12 @@ IRQ_DEBUG_OPTION = -UAK_IO_IRQ_ANALYZER
 USB_OPTION = -UUSING_USB_MOD
 
 # Interface compile option.
-IF_LINK_OPTION = -DIF_LINK_UART_EN
+IF_LINK_OPTION = -UIF_LINK_UART_EN
 IF_NETWORK_NRF24_OPTION = -UIF_NETWORK_NRF24_EN
 
 # Task compile option.
 TASK_ZIGBEE_OPTION = -UTASK_ZIGBEE_EN
-TASK_MBMASTER_OPTION = -DTASK_MBMASTER_EN
+TASK_MBMASTER_OPTION = -UTASK_MBMASTER_EN
 
 # Include sources file
 include sources/ak/Makefile.mk
@@ -73,9 +73,9 @@ include sources/driver/Makefile.mk
 include sources/libraries/Makefile.mk
 include sources/sys/Makefile.mk
 include sources/networks/Makefile.mk
-include sources/platform/stm32l/Makefile.mk
+include sources/platform/stm32h/Makefile.mk
 
-OBJECTS_DIR = build_$(NAME_MODULE)
+OBJECTS_DIR = build
 TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).axf
 
 SOURCES		+=
@@ -90,17 +90,17 @@ SOURCES_ASM	+=
 SOURCES_ASM_	 = $(shell find $(SOURCES_ASM) -type f -printf "%f\n")
 OBJECTS		+= $(patsubst %.s, $(OBJECTS_DIR)/%.o, $(SOURCES_ASM_))
 
-LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
-LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
-LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
-LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
-LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
+LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libc.a
+LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libm.a
+LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libg.a
+LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/librdpmon.a
+LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp/libstdc++_nano.a
 
-LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
-LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
+LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp/libgcc.a
+LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp/libgcov.a
 
-LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp
-LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7e-m+dp/softfp
+LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/13.3.1/thumb/v7e-m+dp/softfp
 
 # The command for calling the compiler.
 CC		=	$(GCC_PATH)/bin/arm-none-eabi-gcc
@@ -111,7 +111,7 @@ LD		=	$(GCC_PATH)/bin/arm-none-eabi-ld
 OBJCOPY		=	$(GCC_PATH)/bin/arm-none-eabi-objcopy
 OBJDUMP		=	$(GCC_PATH)/bin/arm-none-eabi-objdump
 OBJNM		=	$(GCC_PATH)/bin/arm-none-eabi-nm
-ARM_GDB		=	$(GCC_PATH)/bin/arm-none-eabi-gdb-py
+ARM_GDB		=	$(GCC_PATH)/bin/arm-none-eabi-gdb
 ARM_SIZE	=	$(GCC_PATH)/bin/arm-none-eabi-size
 
 MEMORY_USAGE_BAR_WIDTH = 30
@@ -153,8 +153,8 @@ endef
 
 # Set the compiler CPU/FPU options.
 # https://launchpadlibrarian.net/177524521/readme.txt
-CPU = -mthumb -march=armv7-m
-FPU = -mfloat-abi=soft
+CPU = -mthumb -mcpu=cortex-m7
+FPU = -mfloat-abi=softfp
 
 # Interface option
 IF_OPTION +=	$(IF_LINK_OPTION)		\
@@ -170,7 +170,8 @@ TASK_OPTION +=	$(TASK_MBMASTER_OPTION)
 
 HARDWARE_OPTION += \
 		-DSSD1309_DRIVER_EN	\
-		-USH1106_DRIVER_EN
+		-DSH1106_DRIVER_EN	\
+		-USSD1306_DRIVER_EN
 
 # Console log compile option
 CONSOLE_OPTION +=			\
@@ -194,10 +195,10 @@ GENERAL_FLAGS +=			\
 		$(IF_OPTION)		\
 		$(TASK_OPTION)		\
 		$(HARDWARE_OPTION)  \
-		-DUSE_STDPERIPH_DRIVER	\
-		-DSTM32L1XX_MD		\
 		-DSTM32L_PLATFORM	\
-		-DUSE_EXTERNAL_FLASH	\
+		-DUSE_HAL_DRIVER \
+		-DSTM32H743xx \
+		-DUSE_FULL_LL_DRIVER	\
 
 COMPILER_FLAGS +=			\
 		$(CPU)			\
@@ -208,6 +209,8 @@ COMPILER_FLAGS +=			\
 		-MD			\
 		-Wall			\
 		-c			\
+		-MMD		\
+		-MP			\
 
 # C compiler flags
 CFLAGS +=				\
@@ -245,15 +248,15 @@ $(TARGET): $(OBJECTS) $(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(L
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.elf)
 	@$(ARM_SIZE) $(TARGET)
 
-$(OBJECTS_DIR)/%.o: %.c
+$(OBJECTS_DIR)/%.o: %.c | create
 	$(Print) CC $@
 	@$(CC) $(CFLAGS) -o $@ $<
 
-$(OBJECTS_DIR)/%.o: %.cpp
+$(OBJECTS_DIR)/%.o: %.cpp | create
 	$(Print) CXX $@
 	@$(CPP) $(CPPFLAGS) -o $@ $<
 
-$(OBJECTS_DIR)/%.o: %.s
+$(OBJECTS_DIR)/%.o: %.s | create
 	$(Print) AS $@
 	@$(AS) $(CFLAGS) -o $@ $<
 
@@ -290,7 +293,7 @@ endif
 
 .PHONY: debug
 debug: all
-	xterm -e openocd -f $(OPENOCD_PATH)/tcl/board/stm32ldiscovery.cfg &
+	xterm -f  interface/stlink.cfg openocd -f /target/stm32h7.cfg &
 ifeq ($(gdb),ddd)
 	$(Print) DBG using DDD
 	ddd --debugger $(ARM_GDB) --command=stm32l_init.gdb $(TARGET)
@@ -317,3 +320,8 @@ asm: $(TARGET)
 sym: $(TARGET)
 	$(Print) export object name $(<:.axf=.sym)
 	$(OBJNM) --size-sort --print-size $(<) >> $(<:.axf=.sym)
+
+#######################################
+# dependencies
+#######################################
+-include $(wildcard $(OBJECTS_DIR)/*.d)
